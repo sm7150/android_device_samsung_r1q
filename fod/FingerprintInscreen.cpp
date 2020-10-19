@@ -20,11 +20,19 @@
 #include <android-base/logging.h>
 #include <hidl/HidlTransportSupport.h>
 #include <fstream>
+#include <cmath>
+#include <thread>
 
 #define FINGERPRINT_ACQUIRED_VENDOR 6
 
+/*
+ * Define proper FOD needed paths
+ */
 #define BRIGHTNESS_PATH "/sys/class/backlight/panel0-backlight/brightness"
 #define TSP_CMD_PATH "/sys/class/sec/tsp/cmd"
+#define FP_GREEN_CIRCLE "/sys/class/lcd/panel/fp_green_circle"
+#define MASK_BRIGHTNESS_PATH "/sys/class/lcd/panel/mask_brightness"
+#define FOD_DIMMING_PATH "/sys/class/lcd/panel/fod_dimming"
 
 #define SEM_FINGER_STATE 22
 #define SEM_PARAM_PRESSED 2
@@ -69,6 +77,8 @@ static hidl_vec<int8_t> stringToVec(const std::string& str) {
 
 FingerprintInscreen::FingerprintInscreen() {
     mSecBiometricsFingerprintService = ISecBiometricsFingerprint::getService();
+    set(MASK_BRIGHTNESS_PATH, "319");
+    set(TSP_CMD_PATH, "fod_enable,1,1,0");
 }
 
 void FingerprintInscreen::requestResult(int, const hidl_vec<int8_t>&) {
@@ -84,35 +94,33 @@ Return<void> FingerprintInscreen::onFinishEnroll() {
 }
 
 Return<void> FingerprintInscreen::onPress() {
-    mPreviousBrightness = get<std::string>(BRIGHTNESS_PATH, "");
-    set(BRIGHTNESS_PATH, "319");
-    set(TSP_CMD_PATH, "fod_enable,1,1");
-    mSecBiometricsFingerprintService->request(SEM_FINGER_STATE, 0,
-        SEM_PARAM_PRESSED, stringToVec(SEM_AOSP_FQNAME), FingerprintInscreen::requestResult);
+    set(MASK_BRIGHTNESS_PATH, "319");
+    set(FP_GREEN_CIRCLE, "1");
+    std::thread([this]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(48));
+        mSecBiometricsFingerprintService->request(SEM_FINGER_STATE, 0,
+            SEM_PARAM_PRESSED, stringToVec(SEM_AOSP_FQNAME), FingerprintInscreen::requestResult);
+    }).detach();
     return Void();
 }
 
 Return<void> FingerprintInscreen::onRelease() {
     mSecBiometricsFingerprintService->request(SEM_FINGER_STATE, 0,
         SEM_PARAM_RELEASED, stringToVec(SEM_AOSP_FQNAME), FingerprintInscreen::requestResult);
-    set(TSP_CMD_PATH, "fod_enable,0");
-    if (!mPreviousBrightness.empty()) {
-        set(BRIGHTNESS_PATH, mPreviousBrightness);
-        mPreviousBrightness = "";
-    }
+    set(FP_GREEN_CIRCLE, "0");
     return Void();
 }
 
 Return<void> FingerprintInscreen::onShowFODView() {
+    set(FOD_DIMMING_PATH, "1");
     return Void();
 }
 
 Return<void> FingerprintInscreen::onHideFODView() {
-    set(TSP_CMD_PATH, "fod_enable,0");
-    if (!mPreviousBrightness.empty()) {
-        set(BRIGHTNESS_PATH, mPreviousBrightness);
-        mPreviousBrightness = "";
-    }
+    set(FP_GREEN_CIRCLE, "0");
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    set(FOD_DIMMING_PATH, "0");
     return Void();
 }
 
@@ -151,15 +159,7 @@ Return<void> FingerprintInscreen::setLongPressEnabled(bool) {
 }
 
 Return<int32_t> FingerprintInscreen::getDimAmount(int32_t cur_brightness) {
-    if (cur_brightness <= 12) {
-        return 2200 / std::max(cur_brightness, 10);
-    } else if (cur_brightness <= 16) {
-        return 3000 / cur_brightness;
-    } else if (cur_brightness <= 20) {
-        return 3700 / cur_brightness;
-    } else {
-        return 4400 / cur_brightness;
-    }
+    return 0;
 }
 
 Return<bool> FingerprintInscreen::shouldBoostBrightness() {

@@ -299,7 +299,13 @@ on boot
     chown system system /mnt/vendor/persist/sensors/registry/config
     chmod 0664 /mnt/vendor/persist/sensors/sensors_settings
 
-    # Fingerprint sensor
+    # Fingerprint Sensor & Paths
+    chown system system /sys/class/lcd/panel/fod_dimming
+    chown system system /sys/class/lcd/panel/mask_brightness
+    chown system system /sys/class/sec/tsp/cmd
+    chmod 0644 /sys/class/lcd/panel/fod_dimming
+    chmod 0644 /sys/class/lcd/panel/mask_brightness
+
     chmod 0660 /dev/esfp0
     chown system system /dev/esfp0
 
