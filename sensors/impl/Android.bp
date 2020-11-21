@@ -1,5 +1,5 @@
 cc_library_shared {
-    name: "android.hardware.sensors@1.0-impl.a70q",
+    name: "android.hardware.sensors@1.0-impl.r1q",
     defaults: ["hidl_defaults"],
     proprietary: true,
     relative_install_path: "hw",
