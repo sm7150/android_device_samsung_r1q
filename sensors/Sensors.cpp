@@ -106,6 +106,9 @@ Sensors::Sensors()
         }
     }
 
+    /* Get us all sensors */
+    setOperationMode(static_cast<hardware::sensors::V1_0::OperationMode>(5555));
+
     mInitCheck = OK;
 }
 
@@ -129,9 +132,12 @@ Return<void> Sensors::getSensorsList(getSensorsList_cb _hidl_cb) {
         if (dst->requiredPermission == "com.samsung.permission.SSENSOR") {
             dst->requiredPermission = "";
         }
+
         if (dst->typeAsString == "com.samsung.sensor.physical_proximity") {
+            LOG(INFO) << "Fixing com.samsung.sensor.physical_proximity";
             dst->type = SensorType::PROXIMITY;
-            dst->typeAsString = "";
+            dst->typeAsString = SENSOR_STRING_TYPE_PROXIMITY;
+            dst->maxRange = 1;
         }
     }
 

@@ -11,6 +11,12 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     persist.vendor.btstack.avrcp-playstatus.blacklist=true \
     bt.max.hfpclient.connections=1
 
+# Bluetooth Hacks
+PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+    ro.bluetooth.a2dp_offload.supported=false \
+    persist.bluetooth.a2dp_offload.disabled=true \
+    vendor.audio.feature.a2dp_offload.enable=false
+
 # Media
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     media.aac_51_output_enabled=true \
@@ -37,6 +43,10 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
 # Radio/RIL
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     use.voice.path.for.pcm.voip=true
+
+# Audio
+PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+    qcom.hw.aac.encoder=true
 
 # Overide NavBar to show
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
